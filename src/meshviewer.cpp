@@ -24,10 +24,43 @@ GLuint theVboPosId;
 GLuint theVboNormalId;
 GLuint theElementbuffer;
 
+float dist = 4.0f;
+float azimuth = 0.0f;
+float elevation = 0.0f;
+float mouse_posx = 0.0f;
+float mouse_posy = 0.0f;
+bool shift_pressed, mouse_pressed;
+glm::mat4 _transform;
+
 static void LoadModel(int modelId)
 {
    assert(modelId >= 0 && modelId < theModelNames.size());
    theModel.loadPLY(theModelNames[theCurrentModel]);
+   
+   vec3 min_bound = theModel.getMinBounds();
+   vec3 max_bound = theModel.getMaxBounds();
+
+   float x_max = max_bound.x - min_bound.x;
+   float y_max = max_bound.y - min_bound.y;
+   float z_max = max_bound.z - min_bound.z;
+   float result = 0;
+   if (result < x_max) 
+   {
+       result = x_max;
+   }
+   if (result < y_max)
+   {
+       result = y_max;
+   }
+   if (result < z_max)
+   {
+       result = z_max;
+   }
+   glm::vec3 translatevec = (min_bound + max_bound) / 2.0f;
+   float scalefactor = 2.0f / result;
+   glm::mat4 move = glm::translate(glm::mat4(1.0f), -translatevec);
+   glm::mat4 scale = glm::scale(glm::mat4(1.0f), glm::vec3(scalefactor, scalefactor, scalefactor));
+   _transform = scale * move;
 
    glBindBuffer(GL_ARRAY_BUFFER, theVboPosId);
    glBufferData(GL_ARRAY_BUFFER, theModel.numVertices() * 3 * sizeof(float), theModel.positions(), GL_DYNAMIC_DRAW);
@@ -81,23 +114,40 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 {
    double xpos, ypos;
    glfwGetCursorPos(window, &xpos, &ypos);
-
+   mouse_posx = xpos;
+   mouse_posy = ypos;
    // TODO: Camera controls
 
    int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
    if (state == GLFW_PRESS)
    {
+       mouse_pressed = true;
        int keyPress = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT);
-       if (keyPress == GLFW_PRESS) {}
+       if (keyPress == GLFW_PRESS) 
+       {
+           shift_pressed = true;
+       }
    }
    else if (state == GLFW_RELEASE)
    {
+       shift_pressed = false;
+       mouse_pressed = false;
    }
 }
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
-   // TODO: Camera controls
+    if (mouse_pressed == true && shift_pressed == false)
+    {
+        azimuth += 0.1* (xpos - mouse_posx);
+        elevation += 0.1 *(ypos - mouse_posy);
+    }
+    else if (mouse_pressed == true && shift_pressed == true)
+    {
+        dist +=  0.1* (ypos - mouse_posy);
+    }
+    mouse_posx = xpos;
+    mouse_posy = ypos;
 }
 
 static void PrintShaderErrors(GLuint id, const std::string label)
@@ -247,11 +297,35 @@ int main(int argc, char** argv)
    GLuint shaderId = LoadShader("../shaders/phong.vs", "../shaders/phong.fs");
    glUseProgram(shaderId);
 
+   GLuint mvpId = glGetUniformLocation(shaderId, "mvp");
+   GLuint mvId = glGetUniformLocation(shaderId, "uMV");
+   GLuint nmvId = glGetUniformLocation(shaderId, "uNMV");
+
+   glm::vec3 lookfrom(0, 0, 1);
+   glm::mat4 transform(1.0); // initialize to identity
+   glm::mat4 projection = glm::perspective(glm::radians(60.0), 1.0, 0.1, 10.0);
    // Loop until the user closes the window 
    while (!glfwWindowShouldClose(window))
    {
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // Clear the buffers
+      lookfrom.x = dist * sin(azimuth) * cos(elevation);
+      lookfrom.y = dist * sin(elevation);
+      lookfrom.z = dist * cos(azimuth) * cos(elevation);
+      glm::mat4 camera = glm::lookAt(lookfrom, glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+      glm::mat4 mvp = projection * camera * _transform;
+      glm::mat4 uMV = camera * _transform;
+      glm::mat3 nmv = glm::mat3(glm::vec3(uMV[0]), glm::vec3(uMV[1]), glm::vec3(uMV[2]));
 
+
+      glUniformMatrix4fv(mvpId, 1, GL_FALSE, &mvp[0][0]);
+      glUniformMatrix4fv(mvId, 1, GL_FALSE, &uMV[0][0]);
+      glUniformMatrix3fv(nmvId, 1, GL_FALSE, &nmv[0][0]);
+      glUniform3f(glGetUniformLocation(shaderId, "uMaterial.Ks"), 1.0, 1.0, 1.0);
+      glUniform3f(glGetUniformLocation(shaderId, "uMaterial.Kd"), 0.4, 0.6, 1.0);
+      glUniform3f(glGetUniformLocation(shaderId, "uMaterial.Ka"), 0.1, 0.1, 0.1);
+      glUniform1f(glGetUniformLocation(shaderId, "uMaterial.shininess"), 80.0);
+      glUniform3f(glGetUniformLocation(shaderId, "uLight.position"), 100.0, 100.0, 100.0);
+      glUniform3f(glGetUniformLocation(shaderId, "uLight.color"), 1.0, 1.0, 1.0);
       // Draw primitive
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theElementbuffer);
       glDrawElements(GL_TRIANGLES, theModel.numTriangles() * 3, GL_UNSIGNED_INT, (void*)0);
