@@ -69,12 +69,12 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 {
     if (mouse_pressed == true && shift_pressed == false) 
     {
-        azimuth +=  xpos - mouse_posx;
-        elevation +=  ypos - mouse_poxy;
+        azimuth +=  0.1*(xpos - mouse_posx);
+        elevation +=  0.1*(ypos - mouse_poxy);
     }
     else if (mouse_pressed == true && shift_pressed == true) 
     {
-        dist = dist + (xpos - mouse_posx);
+        dist += 0.1* (xpos - mouse_posx);
     }
     mouse_posx = xpos;
     mouse_poxy = ypos;
