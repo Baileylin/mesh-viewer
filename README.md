@@ -39,5 +39,13 @@ To run each program from build, you would type
 mesh-viewer/build $ ../bin/mesh-viewer
 ```
 
-# TODO: Screenshots and writeup
+## Simple Mesh
+<img src='./gifs/simple.gif'  width='550' />
+
+## Unlit Shading
+<img src='./gifs/billboard.gif'  width='550' />
+
+## Phone Shading
+I am not sure why the mesh is not showing the correct result. I think there is something wrong in phone.vs, but I wasn't able to find out the error. 
+<img src='./gifs/mesh.gif'  width='550' />
 
