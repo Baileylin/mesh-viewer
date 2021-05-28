@@ -43,7 +43,7 @@ mesh-viewer/build $ ../bin/mesh-viewer
 <img src='./gifs/simple.gif'  width='550' />
 
 ## Unlit Shading
-<img src='./gifs/billboard.gif'  width='550' />
+<img src='./gifs/unlit.gif'  width='550' />
 
 ## Phone Shading
 I am not sure why the mesh is not showing the correct result. I think there is something wrong in phone.vs, but I wasn't able to find out the error. 
