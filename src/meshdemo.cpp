@@ -294,7 +294,7 @@ int main(int argc, char** argv)
     LoadModels("../models/");
     LoadModel(0);
 
-    GLuint shaderId = LoadShader("../shaders/phong.vs", "../shaders/phong.fs");
+    GLuint shaderId = LoadShader("../shaders/toon.vs", "../shaders/toon.fs");
     glUseProgram(shaderId);
 
     GLuint mvpId = glGetUniformLocation(shaderId, "mvp");
@@ -320,6 +320,7 @@ int main(int argc, char** argv)
         glUniformMatrix4fv(mvpId, 1, GL_FALSE, &mvp[0][0]);
         glUniformMatrix4fv(mvId, 1, GL_FALSE, &uMV[0][0]);
         glUniformMatrix3fv(nmvId, 1, GL_FALSE, &nmv[0][0]);
+        glUniform1f(glGetUniformLocation(shaderId, "time"), glfwGetTime());
         glUniform3f(glGetUniformLocation(shaderId, "uMaterial.Ks"), 1.0, 1.0, 1.0);
         glUniform3f(glGetUniformLocation(shaderId, "uMaterial.Kd"), 0.4, 0.6, 1.0);
         glUniform3f(glGetUniformLocation(shaderId, "uMaterial.Ka"), 0.1, 0.1, 0.1);
